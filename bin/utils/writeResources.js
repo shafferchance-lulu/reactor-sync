@@ -52,6 +52,8 @@ function listResources(settings, resourceName, resourceType, resourceTypes) {
 function writeResources(resourceTypes, settings) {
   resourceTypes.forEach( (resourceType, index, resourceTypes) => {
     if (resourceType === ruleComponentsName) return;
+    if (resourceType === 'property') return;
+    console.log({ resourceType });
     const resourceName = toMethodName(resourceType, false);
       
     try {

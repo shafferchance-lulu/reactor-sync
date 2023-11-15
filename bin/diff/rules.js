@@ -11,13 +11,13 @@ governing permissions and limitations under the License.
 */
 
 const fs = require('fs');
-const ora = require('ora');
+const ora = import('ora');
 const fromFile = require('../utils/fromFile');
 const compare = require('./compare');
 
 module.exports = async (args, result) => {
 
-  const spinner = ora('Diffing Rules \n');
+  const spinner = await ora.then(mod => mod.default('Diffing Rules \n'));
   spinner.color = 'blue';
   spinner.start();
 

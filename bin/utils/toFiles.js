@@ -15,8 +15,9 @@ const mkdirp = require('mkdirp');
 const sanitize = require('sanitize-filename');
 
 function checkCreateDir(localPath) {
-  if (!fs.existsSync(localPath))
-    mkdirp(localPath);
+  if (!fs.existsSync(localPath)) {
+    return mkdirp(localPath);
+  }
 }
 
 function getLocalPath(data, args) {
@@ -38,7 +39,15 @@ function sanitizeName(data) {
 
 function makeSymLink(localDirectory, sanitizedName, data) {
   if (!fs.existsSync(`${localDirectory}/${sanitizedName}`)) {
-    mkdirp(`${localDirectory}/${sanitizedName}`);
+    try {
+      mkdirp(`${localDirectory}/${sanitizedName}`);
+    } catch (e) {
+      if (e.code === 'EEXIST') {
+        console.log(`${localDirectory}/${sanitizedName}`);
+      } else {
+        throw e;
+      }
+    }
     fs.symlinkSync(data.id, `${localDirectory}/${sanitizedName}`, 'dir');
   }
 }
@@ -72,7 +81,7 @@ async function toFiles(data, args) {
   const reactor = args.reactor;
   const { localPath, localDirectory } = getLocalPath(data, args);
 
-  checkCreateDir(localPath);
+  await checkCreateDir(localPath);
   sanitizeLink(data, localDirectory);
   writeDataJson(localPath, data);
 

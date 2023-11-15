@@ -1,4 +1,4 @@
-const ora = require('ora');
+const ora = import('ora');
 const writeResources = require('./utils/writeResources');
 const checkAccessToken = require('./utils/getAccessToken');
 const checkArgs = require('./utils/checkArgs');
@@ -6,8 +6,8 @@ const getReactor = require('./utils/getReactor');
 const resourceTypes = ['data_elements', 'property', 'extensions', 'rules', 'rule_components', 'environments'];
 
 
-function startSpinner() {
-  const spinner = ora('Pulling Resources \n');
+async function startSpinner() {
+  const spinner = await ora.then(mod => mod.default('Pulling Resources \n'));
   spinner.color = 'blue';
   return spinner.start();
 }
@@ -20,7 +20,7 @@ async function setSettings(args) {
 }
 
 async function pull(args) {
-  const spinner = startSpinner();
+  const spinner = await startSpinner();
   const settings = await setSettings(args);
   writeResources(resourceTypes, settings);
   spinner.stop();

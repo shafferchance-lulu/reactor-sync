@@ -11,13 +11,12 @@ governing permissions and limitations under the License.
 */
 
 const fs = require('fs');
-const ora = require('ora');
+const ora = import('ora');
 const fromFile = require('../utils/fromFile');
 const compare = require('./compare');
 
 module.exports = async (args, result) => {
-
-  const spinner = ora('Diffing Rule Components \n');
+  const spinner = await ora.then(mod => mod.default('Diffing Rule Components \n'));
   spinner.color = 'green';
   spinner.start();
 
@@ -41,17 +40,17 @@ module.exports = async (args, result) => {
   // TODO: go back through and refactor this to get everything...not just 999
   const rules = (
     await reactor.listRulesForProperty(args.propertyId, {
-      'page[size]': 999
+      'page[size]': 999,
     })
   ).data;
   // const ruleComponents = await property.getRuleComponents();
   let remotes = [];
   let remotesPromises = [];
   for (let rule of rules) {
-
     remotesPromises.push(
-      reactor.listRuleComponentsForRule(rule.id, {
-        'page[size]': 999
+      reactor
+      .listRuleComponentsForRule(rule.id, {
+        'page[size]': 999,
       })
       .then((response) => {
         remotes = remotes.concat(response.data);
@@ -66,8 +65,9 @@ module.exports = async (args, result) => {
     // remotes = remotes.concat(tempRuleComponents);
   }
 
-  for (const file of files) {
+  await Promise.all(remotesPromises);
 
+  for (const file of files) {
     // make sure we only deal with directories that start with DE
     if (!file.startsWith('RC')) {
       continue;
@@ -78,38 +78,31 @@ module.exports = async (args, result) => {
     // get the local object from file
     const local = await fromFile(localPath, args);
     // get the object from launch
-    const remote = remotes.find((remote) => (local.id === remote.id));
+    const remote = remotes.find((remote) => local.id === remote.id);
 
     // diff compare
     let comparison = compare(local, remote, result);
-    result[comparison.result]
-    .push({
+    result[comparison.result].push({
       type: local.type,
       id: local.id,
       path: localPath,
       details: comparison.details,
     });
-
   }
 
   for (const remote of remotes) {
-
     // we only want to sync things that haven't been handled above.
     // just the remotes that haven't even been created here
-    if (!files.find((id) => (id === remote.id))) {
-
+    if (!files.find((id) => id === remote.id)) {
       // diff compare
       const comparison = compare(null, remote, result);
-      result[comparison.result]
-      .push({
+      result[comparison.result].push({
         type: remote.type,
         id: remote.id,
         path: `${ruleComponentsPath}/${remote.id}`,
         details: comparison.details,
       });
-
     }
-
   }
 
   spinner.stop();

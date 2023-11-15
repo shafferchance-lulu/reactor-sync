@@ -12,38 +12,27 @@ governing permissions and limitations under the License.
 
 const fs = require('fs');
 const jwt = require('jwt-simple');
-const request = require('request-promise-native');
 
-async function checkAccessToken(args) {
-  if (!args.accessToken)
-    return await getAccessToken(args);
+// eslint-disable-next-line
+const fetch = import("node-fetch");
+
+async function checkAccessToken(settings) {
+  return getAccessToken(settings);
 }
 
-async function getAccessToken(settings) {
-  const integration = settings.integration;
+async function getJWTBasedAccessToken(settings) {
   const environment = settings.environment;
+  const integration = settings.integration;
 
-  // check to make sure we have all of the correct information in the settings file
-  if (!integration) {
-    throw Error('settings file does not have an "integration" property.');
-  }
-  if (!integration.clientId) {
-    throw Error('settings file does not have an "integration.clientId" property.');
-  }
-  if (!integration.clientSecret) {
-    throw Error('settings file does not have an "integration.clientSecret" property.');
-  }
   if (!integration.payload) {
-    throw Error('settings file does not have an "integration.payload" property.');
+    throw Error(
+      'settings file does not have an "integration.payload" property.'
+    );
   }
   if (!integration.privateKey) {
-    throw Error('settings file does not have an "integration.privateKey" property.');
-  }
-  if (!environment) {
-    throw Error('settings file does not have an "environment" property.');
-  }
-  if (!environment.jwt) {
-    throw Error('settings file does not have an "environment.jwt" property.');
+    throw Error(
+      'settings file does not have an "integration.privateKey" property.'
+    );
   }
 
   let privateKeyContent;
@@ -61,33 +50,105 @@ async function getAccessToken(settings) {
 
   // Make a request to exchange the jwt token for a bearer token
   try {
-
-    const body = await request({
+    const body = await fetch.then(mod => mod.default(environment.jwt, {
       method: 'POST',
-      url: environment.jwt,
       headers: {
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
       },
       form: {
         client_id: integration.clientId,
         client_secret: integration.clientSecret,
-        jwt_token: jwtToken
+        jwt_token: jwtToken,
       },
-      transform: JSON.parse
-    });
+    }));
 
-    return body.access_token;
+    const result = await body.json()
 
+    console.log({ result });
+
+    return result.access_token;
   } catch (e) {
-
     console.log(e);
 
     const parsedErrorObject = JSON.parse(e.error);
-    
-    throw new Error(`Error retrieving access token. ${parsedErrorObject.error_description}.  Please check the values in the settings file are still valid`);
 
+    throw new Error(
+      `Error retrieving access token. ${parsedErrorObject.error_description}.  Please check the values in the settings file are still valid`
+    );
+  }
+}
+
+const defaultScope = [
+  'AdobeID',
+  'openid',
+  'read_organizations',
+  'additional_info.job_function',
+  'additional_info.projectedProductContext',
+  'additional_info.roles',
+];
+// Since JWT is deprecated adding this
+// const ADOBE_TOKEN_URL = "https://ims-na1.adobelogin.com/ims/token/v3";
+async function getOAuthBasedAccessToken(settings) {
+  const integration = settings.integration;
+  const environment = settings.environment;
+  const grantType =
+    settings.integration['grantType'] === undefined
+      ? 'client_credentials'
+      : settings.integration['grantType'];
+  const scope =
+    settings.integration['scope'] === undefined
+      ? defaultScope.concat(',')
+      : settings.integration['scope'];
+
+  return fetch.then(mod => mod.default(environment.oauth, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `grant_type=${grantType}&client_id=${integration.clientId}&client_secret=${integration.clientSecret}&scope=${scope}`,
+  })).then((res) => res.json())
+  .then((body) => {
+
+    console.log({ body });
+    return body["access_token"];
+  });
+}
+
+async function getAccessToken(settings) {
+  const integration = settings.integration;
+  const environment = settings.environment;
+
+  console.log(settings);
+  console.log("hit")
+  // check to make sure we have all of the correct information in the settings file
+  if (!integration) {
+    throw Error('settings file does not have an "integration" property.');
+  }
+  if (!integration.clientId) {
+    throw Error(
+      'settings file does not have an "integration.clientId" property.'
+    );
+  }
+  if (!integration.clientSecret) {
+    throw Error(
+      'settings file does not have an "integration.clientSecret" property.'
+    );
   }
 
+  if (!environment) {
+    throw Error('settings file does not have an "environment" property.');
+  }
+  if (!environment.jwt && !environment.oauth) {
+    throw Error(
+      'settings file does not have an "environment.(jwt|oauth)" property.'
+    );
+  }
+
+  if (environment.jwt) {
+    return getJWTBasedAccessToken(settings);
+  } else {
+    return getOAuthBasedAccessToken(settings);
+  }
 }
 
 module.exports = checkAccessToken;

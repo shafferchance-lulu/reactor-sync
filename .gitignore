@@ -15,6 +15,9 @@ pids
 node_modules/
 package-lock.json
 
+#
+adobe-test/
+
 # Optional npm cache directory
 .npm
 
