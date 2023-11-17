@@ -50,6 +50,8 @@ async function initializeProperty(path) {
   } catch (e) {
     await mkdir(propertyPath);
   }
+
+  await writeFile(resolve(propertyPath, 'data.json'), JSON.stringify({ id: propertyId, type: 'Property' }));
   
   const directories = ['data_elements','environments','extensions','rule_components','rules'];
   await Promise.all(directories.map((dir) => {
