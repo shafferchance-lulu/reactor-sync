@@ -26,7 +26,7 @@ async function tryToValidateSettings(args, path) {
         };
         return JSON.stringify(current);
       });
-    } else if (e.message.include('"environment.reactorUrl')) {
+    } else if (e.message.includes('"environment.reactorUrl')) {
       await writeFile(path, async (input) => {
         const current = JSON.parse(input);
         const reactorUrl = await prompt(`Reactor API Url (Default: ${REACTOR_API_URL}`);

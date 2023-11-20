@@ -6,7 +6,7 @@ function checkSettings(args) {
   if (fs.existsSync(settingsPath)) {
     return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
   } else {
-    return console.error(`Launch Sync settings file at: ${settingsPath} does not exist.`);
+    throw new Error(`Launch Sync settings file at: ${settingsPath} does not exist.`);
   }
 }
 
