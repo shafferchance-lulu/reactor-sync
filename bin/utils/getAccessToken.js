@@ -64,11 +64,8 @@ async function getJWTBasedAccessToken(settings) {
 
     const result = await body.json()
 
-    console.log({ result });
-
     return result.access_token;
   } catch (e) {
-    console.log(e);
 
     const parsedErrorObject = JSON.parse(e.error);
 
@@ -86,6 +83,8 @@ const defaultScope = [
   'additional_info.projectedProductContext',
   'additional_info.roles',
 ];
+
+
 // Since JWT is deprecated adding this
 // const ADOBE_TOKEN_URL = "https://ims-na1.adobelogin.com/ims/token/v3";
 async function getOAuthBasedAccessToken(settings) {
@@ -99,7 +98,7 @@ async function getOAuthBasedAccessToken(settings) {
     settings.integration['scope'] === undefined
       ? defaultScope.concat(',')
       : settings.integration['scope'];
-
+  
   return fetch.then(mod => mod.default(environment.oauth, {
     method: 'POST',
     headers: {
@@ -118,8 +117,6 @@ async function getAccessToken(settings) {
   const integration = settings.integration;
   const environment = settings.environment;
 
-  console.log(settings);
-  console.log("hit")
   // check to make sure we have all of the correct information in the settings file
   if (!integration) {
     throw Error('settings file does not have an "integration" property.');

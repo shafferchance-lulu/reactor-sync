@@ -33,7 +33,6 @@ module.exports = async (args) => {
   args.environment = settings.environment;
   args.integration = settings.integration;
 
-  console.log(args.accessToken);
   // get the access token
   if (!args.accessToken) {
     args.accessToken = await getAccessToken(settings);

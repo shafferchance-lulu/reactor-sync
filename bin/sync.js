@@ -55,7 +55,6 @@ module.exports = async (args) => {
   const settings = checkArgs(args);
 
   settings.accessToken = await checkAccessToken(settings);
-  console.log(settings.accessToken);
   const reactor = await getReactor(settings);
   const result = await diff(args);
   // const shouldSyncSome = shouldSync(args);
@@ -90,7 +89,6 @@ module.exports = async (args) => {
   ) {
 
     console.log('↩️  Syncing behind.');
-    console.log(reactor.__proto__);
     for (const comparison of result.behind) {
       const resourceMethodName = toMethodName(comparison.type, true);
       // console.log(resourceMethodName);
