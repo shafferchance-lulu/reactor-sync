@@ -14,6 +14,7 @@ const fs = require('fs');
 const Reactor = require('@adobe/reactor-sdk').default;
 const getAccessToken = require('./utils/getAccessToken');
 const diffProperty = require('./diff/property');
+const ensureDirectory = require('./utils/ensureDirectory');
 
 module.exports = async (args) => {
 
@@ -53,6 +54,7 @@ module.exports = async (args) => {
       reactorUrl: environment.reactorUrl
     });
   }
+  await ensureDirectory(settings.propertyId);
 
   // wait to run the diff on the property
   const result = await diffProperty(args);

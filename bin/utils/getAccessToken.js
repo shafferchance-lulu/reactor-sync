@@ -108,7 +108,6 @@ async function getOAuthBasedAccessToken(settings) {
   })).then((res) => res.json())
   .then((body) => {
 
-    console.log({ body });
     return body["access_token"];
   });
 }

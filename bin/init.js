@@ -2,6 +2,7 @@ const checkArgs = require('./utils/checkArgs');
 const { access, readFile, writeFile, mkdir } = require('fs/promises');
 const { resolve } = require('path');
 const readline = require('node:readline');
+const ensureDirectory = require('./utils/ensureDirectory');
 
 async function writeToFile(path, outputData) {
   return readFile(path).then((data) => outputData(data)).then((output) => writeFile(path, output));
@@ -125,25 +126,7 @@ async function initializeProperty(path) {
     throw new Error('Property ID is required to know which launch to sync');
   }
 
-  const propertyPath = resolve(process.cwd(), propertyId);
-  try {
-    await access(propertyPath);
-  } catch (e) {
-    await mkdir(propertyPath);
-  }
-
-  await writeFile(resolve(propertyPath, 'data.json'), JSON.stringify({ id: propertyId, type: 'Property' }));
-  
-  const directories = ['data_elements','environments','extensions','rule_components','rules'];
-  await Promise.all(directories.map((dir) => {
-    return mkdir(resolve(propertyPath, dir)).catch((e) => {
-      if (e.code === 'EEXIST') {
-        return true;
-      }
-
-      throw e;
-    });
-  }));
+  await ensureDirectory(propertyId);
 
   return writeToFile(path, (input) => {
     const current = JSON.parse(input);

@@ -3,6 +3,7 @@ const writeResources = require('./utils/writeResources');
 const checkAccessToken = require('./utils/getAccessToken');
 const checkArgs = require('./utils/checkArgs');
 const getReactor = require('./utils/getReactor');
+const ensureDirectory = require('./utils/ensureDirectory');
 const resourceTypes = ['data_elements', 'property', 'extensions', 'rules', 'rule_components', 'environments'];
 
 
@@ -12,6 +13,11 @@ async function startSpinner() {
   return spinner.start();
 }
 
+/**
+ * 
+ * @param {*} args 
+ * @returns {import('.').ReactorSettings}
+ */
 async function setSettings(args) {
   const settings = checkArgs(args);
   settings.accessToken = await checkAccessToken(settings);
@@ -22,6 +28,9 @@ async function setSettings(args) {
 async function pull(args) {
   const spinner = await startSpinner();
   const settings = await setSettings(args);
+
+  await ensureDirectory(settings.propertyId)
+
   writeResources(resourceTypes, settings);
   spinner.stop();
 }

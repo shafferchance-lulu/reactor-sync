@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/** * 
+ * @typedef ReactorSettings
+ * @prop {string}                                     propertyId
+ * @prop {{ reactorUrl: string; oauth: string;}}      environment
+ * @prop {{ clientId: string, clientSecret: string }} integration
+ */
+
 /*
 Copyright 2019 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -74,6 +81,9 @@ yargs
       });
     });
 
+    // PR08e19bd98d704a73a828c7aefa528bf4
+    // 3fd52c1971aa4165b863ad33566ef684
+    // p8e-gDY1AtcPjh2soWh_DFPVacT2fFBkPJdd
     console.log(
       chalk.red.bold(
         `Deleted (${result.deleted.length}) ----------------------------------------------------------`

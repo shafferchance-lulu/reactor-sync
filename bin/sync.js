@@ -17,6 +17,8 @@ const toFiles = require('./utils/toFiles');
 const checkArgs = require('./utils/checkArgs');
 const toMethodName = require('./utils/resourceName');
 const diff = require('./diff');
+const ensureDirectory = require('./utils/ensureDirectory');
+const path = require('node:path');
 
 
 async function updateExtension(reactor, local) {
@@ -30,14 +32,32 @@ async function updateExtension(reactor, local) {
     }})).data;
 }
 
+/**
+ * 
+ * @param {import("@adobe/reactor-sdk")} reactor 
+ * @param {*} local 
+ * @returns 
+ */
 async function updateResource(reactor, local) {
-  const resourceName = toMethodName(local.type);
-  const update = (await reactor[`update${resourceName}`]({
-    id: local.id,
-    type: local.type,
-    attributes: local.attributes
-  })).data;
-  maybeRevise(resourceName, reactor, local);
+  const resourceName = toMethodName(local.type, true);
+  let update;
+  try {
+    update = (await reactor[`update${resourceName}`]({
+      id: local.id,
+      type: local.type,
+      attributes: local.attributes
+    })).data;
+    maybeRevise(resourceName, reactor, local);
+  } catch (_e) {
+    const originalResourceName = toMethodName(local.type, true);
+    update = (await reactor[`update${originalResourceName}`]({
+      id: local.id,
+      type: local.type,
+      attributes: local.attributes
+    })).data;
+    maybeRevise(originalResourceName, reactor, local);
+  }
+
   return update;
 }
 
@@ -56,6 +76,9 @@ module.exports = async (args) => {
 
   settings.accessToken = await checkAccessToken(settings);
   const reactor = await getReactor(settings);
+
+  await ensureDirectory(settings.propertyId);
+
   const result = await diff(args);
   // const shouldSyncSome = shouldSync(args);
 
