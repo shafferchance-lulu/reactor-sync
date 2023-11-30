@@ -35,3 +35,5 @@ adobe-test/
 
 # reactor-sync ignores
 .reactor-settings.json
+
+PR*
