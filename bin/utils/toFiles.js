@@ -10,24 +10,46 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+const { exec } = require('child_process');
 const fs = require('fs');
+const path = require('node:path');
 const mkdirp = require('mkdirp');
 const sanitize = require('sanitize-filename');
 
-function checkCreateDir(localPath) {
-  if (!fs.existsSync(localPath)) {
+const isWindows = require('node:os').platform() === 'win32';
+
+/**
+ * 
+ * @param {import('fs').PathLike} localPath 
+ * @returns {import('fs').PathLike}
+ */
+async function checkCreateDir(localPath) {
+  try {
+    await fs.promises.access(localPath);
+    // eslint-disable-next-line no-empty
+  } catch (e) {
     return mkdirp(localPath);
   }
 }
 
+/**
+ * @param {import('./writeResources').ReactorDataEntry} data 
+ * @param {import('..').ReactorSettingsWithSDK} args 
+ * @returns {{ localPath: string, localDirectory: string }}
+ */
 function getLocalPath(data, args) {
-  const propertyPath = `./${args.propertyId}`;
-  return { 
-    'localPath': `${propertyPath}/${data.type}/${data.id}`,
-    'localDirectory': `${propertyPath}/${data.type}`
+  const propertyPath = `.${path.sep}${args.propertyId}`;
+  return {
+    'localPath': `${propertyPath}${path.sep}${data.type}${path.sep}${data.id}`,
+    'localDirectory': `${propertyPath}${path.sep}${data.type}`
   };
 }
 
+/**
+ * 
+ * @param {string} data 
+ * @returns {string}
+ */
 function sanitizeName(data) {
   // create a name that links to the original file
   if (data.attributes.name) {
@@ -37,59 +59,104 @@ function sanitizeName(data) {
   }
 }
 
-function makeSymLink(localDirectory, sanitizedName, data) {
-  if (!fs.existsSync(`${localDirectory}/${sanitizedName}`)) {
+async function symLinkWindows(localDirectory, sanitizedName, data) {
+  return new Promise((res, rej) => {
+    // Please see https://github.com/nodejs/node/issues/18518 (this has NOT been solved)
+    exec(
+      `mklink /J "${localDirectory}${path.sep}${sanitizedName}" "${localDirectory}${path.sep}${data.id}"`,
+      { windowsHide: true },
+      (err, stdout) => {
+        if (err) {
+          return rej(err);
+        }
+
+        return res(stdout);
+      }
+    );
+  });
+}
+
+async function makeSymLink(localDirectory, sanitizedName, data) {
+  try {
+    await fs.promises.access(`${localDirectory}${path.sep}${sanitizedName}`);
+  } catch (e) {
     try {
-      mkdirp(`${localDirectory}/${sanitizedName}`);
+      if (isWindows) {
+        await symLinkWindows(localDirectory, sanitizedName, data);
+      } else {
+        await mkdirp(`${localDirectory}${path.sep}${sanitizedName}`);
+        await fs.promises.symlink(data.id, `${localDirectory}${path.sep}${sanitizedName}`, 'dir');
+      }
     } catch (e) {
       if (e.code === 'EEXIST') {
-        console.log(`${localDirectory}/${sanitizedName}`);
+        return;
       } else {
         throw e;
       }
     }
-    fs.symlinkSync(data.id, `${localDirectory}/${sanitizedName}`, 'dir');
   }
 }
 
-function sanitizeLink(data, localDirectory) {
+/**
+ * 
+ * @param {string} data 
+ * @param {import('fs').PathLike} localDirectory 
+ * @returns {Promise<void>}
+ */
+async function sanitizeLink(data, localDirectory) {
   const sanitizedName = sanitizeName(data);
   if (sanitizeName(data))
-    makeSymLink(localDirectory, sanitizedName, data);
+    return makeSymLink(localDirectory, sanitizedName, data);
 }
 
-function writeDataJson(localPath, data) { 
-  fs.writeFileSync(
-    `${localPath}/data.json`,
+/**
+ * 
+ * @param {import('fs').PathLike} localPath 
+ * @param {import('./writeResources').ReactorDataEntry} data 
+ */
+async function writeDataJson(localPath, data) {
+  return fs.promises.writeFile(
+    `${localPath}${path.sep}data.json`,
     JSON.stringify(data, null, '  ')
   );
 }
 
-function getSettings(data, localPath) {
+/**
+ * 
+ * @param {import('./writeResources').ReactorDataEntry} data 
+ * @param {import('fs').PathLike} localPath 
+ * @returns {{ [key: string]: string | boolean | number }}
+ */
+async function getSettings(data, localPath) {
   const settings = JSON.parse(data.attributes.settings);
 
   if (settings) {
-    fs.writeFileSync(
-      `${localPath}/settings.json`,
+    await fs.promises.writeFile(
+      `${localPath}${path.sep}settings.json`,
       JSON.stringify(settings, null, '  ')
     );
     return settings;
   }
 }
 
+/**
+ * 
+ * @param {import('./writeResources').ReactorDataEntry} data 
+ * @param {import('..').ReactorSettingsWithSDK} args 
+ */
 async function toFiles(data, args) {
   const reactor = args.reactor;
   const { localPath, localDirectory } = getLocalPath(data, args);
-
   await checkCreateDir(localPath);
-  sanitizeLink(data, localDirectory);
-  writeDataJson(localPath, data);
+  await sanitizeLink(data, localDirectory);
+  await writeDataJson(localPath, data);
 
   // if the data has settings, make changes to it
   if (data.attributes.settings) {
-    const settings = getSettings(data, localPath);
+    const settings = await getSettings(data, localPath);
 
     if (settings) {
+      /** @type {import('./writeResources').ReactorTypeElement["transforms"]} */
       let transforms;
 
       // dataElements
@@ -98,6 +165,7 @@ async function toFiles(data, args) {
           data.relationships.updated_with_extension_package &&
           data.relationships.updated_with_extension_package.data
         ) {
+          /** @type {import('./writeResources').ReactorDataEntry} */
           const extensionPackage = (await reactor.getExtensionPackage(
             data.relationships.updated_with_extension_package.data.id
           )).data;
@@ -111,12 +179,13 @@ async function toFiles(data, args) {
           )).transforms;
         }
 
-      // extensions
+        // extensions
       } else if (data.type === 'extensions') {
         if (
           data.relationships.extension_package &&
           data.relationships.extension_package.data
         ) {
+          /** @type {import('./writeResources').ReactorDataEntry} */
           const extensionPackage = (await reactor.getExtensionPackage(
             data.relationships.extension_package.data.id
           )).data;
@@ -125,13 +194,15 @@ async function toFiles(data, args) {
           transforms = extensionPackage.attributes.configuration.transforms;
         }
 
-      // rule_components
+        // rule_components
       } else if (data.type === 'rule_components') {
         if (
           data.relationships.updated_with_extension_package &&
           data.relationships.updated_with_extension_package.data
         ) {
+          /** @type {import("./writeResources").ReactorTypeElement | undefined} */
           let items;
+          /** @type {import('./writeResources').ReactorDataEntry} */
           const extensionPackage = (await reactor.getExtensionPackage(
             data.relationships.updated_with_extension_package.data.id
           )).data;
@@ -142,13 +213,13 @@ async function toFiles(data, args) {
             extensionPackage.attributes.actions
           ) {
             items = extensionPackage.attributes.actions;
-          // if events
+            // if events
           } else if (
             data.attributes.delegate_descriptor_id.indexOf('::events::') !== -1 &&
             extensionPackage.attributes.events
           ) {
             items = extensionPackage.attributes.events;
-          // if conditions
+            // if conditions
           } else if (
             data.attributes.delegate_descriptor_id.indexOf('::conditions::') !== -1 &&
             extensionPackage.attributes.conditions
@@ -182,7 +253,7 @@ async function toFiles(data, args) {
               // if it is the last part
               if (i === il - 1) {
                 value = obj[part];
-              // otherwise drop down
+                // otherwise drop down
               } else {
                 obj = obj[part];
               }
@@ -195,7 +266,7 @@ async function toFiles(data, args) {
         };
 
         // loop through and make the transform and save
-        transforms.forEach(function (transform) {
+        return Promise.all(transforms.map(async function (transform) {
           var value;
 
           // get the value
@@ -203,7 +274,7 @@ async function toFiles(data, args) {
 
           // if we didn't get anything back
           if (!value) return;
-          
+
           // function 
           if (transform.type === 'function') {
 
@@ -216,26 +287,26 @@ ${value}
 //==== END TRANSFORM CODE ====`;
 
             // write the settings file.
-            fs.writeFileSync(
+            return fs.promises.writeFile(
               `${localPath}/settings.${transform.propertyPath}.js`,
               value
             );
 
-          // file or customCode
+            // file or customCode
           } else if (
             transform.type === 'file' ||
             transform.type === 'customCode'
           ) {
             // write the settings file.
-            fs.writeFileSync(
-              `${localPath}/settings.${transform.propertyPath}.js`,
+            return fs.promises.writeFile(
+              `${localPath}${path.sep}settings.${transform.propertyPath}.js`,
               value
             );
-          } else {
+          } else if (process.env.LOG_LEVEL === 'ERROR') {
             console.error('unrecognized transform');
             console.log(transform);
           }
-        });
+        }));
       }
     }
   }

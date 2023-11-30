@@ -40,12 +40,12 @@ module.exports = async (args) => {
   // diff the property
   let comparison = compare(local, remote, result);
   result[comparison.result]
-  .push({
-    type: local.type,
-    id: local.id,
-    path: propertyPath,
-    details: comparison.details, 
-  });
+    .push({
+      type: local.type,
+      id: local.id,
+      path: propertyPath,
+      details: comparison.details,
+    });
 
   await Promise.all([
     // diff data elements

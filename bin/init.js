@@ -74,7 +74,7 @@ async function addAuthToInitSettings(path) {
       current.environment = {};
     }
     current.environment[type] = authObject.url;
-    
+
     current.integration = {
       ...current.integration,
       ...newValues.integration
@@ -89,8 +89,9 @@ const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
 const REACTOR_API_URL = 'https://reactor.adobe.io/';
 async function tryToValidateSettings(args, path) {
   try {
-    checkArgs(args);
+    await checkArgs(args);
   } catch (e) {
+    console.log(e.message);
     if (e.message.includes('Launch Sync settings')) {
       // Don't want to worry about the promise boundary here so explicitly keep it sync
       await writeFile(path, '{}');
@@ -143,10 +144,10 @@ module.exports = async (args) => {
   };
   const path = args.settings === undefined ? resolve(process.cwd(), '.reactor-settings.json') : args.settings;
   return tryToValidateSettings(args, path)
-  .then(() => initializeProperty(path))
-  .then(() => addAuthToInitSettings(path))
-  .finally(() => {
-    console.error = oldConsoleError;
-    rl.close();
-  });
+    .then(() => initializeProperty(path))
+    .then(() => addAuthToInitSettings(path))
+    .finally(() => {
+      console.error = oldConsoleError;
+      rl.close();
+    });
 };

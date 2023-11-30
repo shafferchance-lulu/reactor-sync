@@ -1,11 +1,11 @@
 const fs = require('fs');
 
-
-function checkSettings(args) {
+async function checkSettings(args) {
   const settingsPath = args.settingsPath || './.reactor-settings.json';
-  if (fs.existsSync(settingsPath)) {
-    return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-  } else {
+  try {
+    await fs.promises.access(settingsPath);
+    return JSON.parse(await fs.promises.readFile(settingsPath, 'utf8'));
+  } catch (e) {
     throw new Error(`Launch Sync settings file at: ${settingsPath} does not exist.`);
   }
 }
@@ -20,8 +20,8 @@ function checkEnvironment(settings) {
   return settings.environment;
 }
 
-function checkArgs(args) {
-  const settings = checkSettings(args);
+async function checkArgs(args) {
+  const settings = await checkSettings(args);
   checkEnvironment(settings);
   return settings;
 }

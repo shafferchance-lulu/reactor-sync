@@ -26,7 +26,7 @@ module.exports = (local, remote) => {
 
   // if we have the local, but not the remote
   if (
-    localExists && 
+    localExists &&
     !remoteExists
   ) {
     return {
@@ -36,7 +36,7 @@ module.exports = (local, remote) => {
 
   // if we have the remote, but not the local
   if (
-    !localExists && 
+    !localExists &&
     remoteExists
   ) {
     // TODO: determine when this should be deleted or behind...
@@ -51,12 +51,12 @@ module.exports = (local, remote) => {
 
   // finally do a comparison of attributes 
   for (let attribute in local.attributes) {
-    if (!local.attributes.hasOwnProperty(attribute)) {
+    if (!local.attributes[attribute]) {
       continue;
     }
 
-    let localType = typeof(local.attributes[attribute]);
-    let remoteType = typeof(remote.attributes[attribute]);
+    let localType = typeof (local.attributes[attribute]);
+    let remoteType = typeof (remote.attributes[attribute]);
 
     // if it is a settings object, parse it and then stringify it again because
     // of the unicode escape sequences within...
@@ -75,7 +75,7 @@ module.exports = (local, remote) => {
       localType !== remoteType ||
       // make sure the values are the same (serialize and then compare)
       JSON.stringify(local.attributes[attribute]) !==
-        JSON.stringify(remote.attributes[attribute])
+      JSON.stringify(remote.attributes[attribute])
     ) {
       same = same && false;
 

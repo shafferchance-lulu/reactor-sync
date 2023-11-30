@@ -62,7 +62,7 @@ async function getJWTBasedAccessToken(settings) {
       },
     }));
 
-    const result = await body.json()
+    const result = await body.json();
 
     return result.access_token;
   } catch (e) {
@@ -98,7 +98,7 @@ async function getOAuthBasedAccessToken(settings) {
     settings.integration['scope'] === undefined
       ? defaultScope.concat(',')
       : settings.integration['scope'];
-  
+
   return fetch.then(mod => mod.default(environment.oauth, {
     method: 'POST',
     headers: {
@@ -106,10 +106,10 @@ async function getOAuthBasedAccessToken(settings) {
     },
     body: `grant_type=${grantType}&client_id=${integration.clientId}&client_secret=${integration.clientSecret}&scope=${scope}`,
   })).then((res) => res.json())
-  .then((body) => {
+    .then((body) => {
 
-    return body["access_token"];
-  });
+      return body['access_token'];
+    });
 }
 
 async function getAccessToken(settings) {

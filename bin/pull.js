@@ -19,7 +19,7 @@ async function startSpinner() {
  * @returns {import('.').ReactorSettings}
  */
 async function setSettings(args) {
-  const settings = checkArgs(args);
+  const settings = await checkArgs(args);
   settings.accessToken = await checkAccessToken(settings);
   settings.reactor = await getReactor(settings);
   return settings;
@@ -29,7 +29,7 @@ async function pull(args) {
   const spinner = await startSpinner();
   const settings = await setSettings(args);
 
-  await ensureDirectory(settings.propertyId)
+  await ensureDirectory(settings.propertyId);
 
   writeResources(resourceTypes, settings);
   spinner.stop();

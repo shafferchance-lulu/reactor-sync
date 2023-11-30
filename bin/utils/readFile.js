@@ -12,14 +12,13 @@ governing permissions and limitations under the License.
 
 const fs = require('fs');
 
-module.exports = (path) => {
-
-  if (fs.existsSync(path)) {
+module.exports = async (path) => {
+  try {
+    await fs.promises.access(path);
     return JSON.parse(
-      fs.readFileSync(path, 'utf8')
+      await fs.promises.readFile(path, 'utf8')
     );
-  } else {
+  } catch (_e) {
     throw Error(`File ${path} does not exist.`);
   }
-
 };

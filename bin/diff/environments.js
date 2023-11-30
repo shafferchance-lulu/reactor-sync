@@ -62,12 +62,12 @@ module.exports = async (args, result) => {
     // diff compare
     let comparison = compare(local, remote, result);
     result[comparison.result]
-    .push({
-      type: local.type,
-      id: local.id,
-      path: localPath,
-      details: comparison.details,
-    });
+      .push({
+        type: local.type,
+        id: local.id,
+        path: localPath,
+        details: comparison.details,
+      });
 
   }
 
@@ -80,12 +80,12 @@ module.exports = async (args, result) => {
       // diff compare
       const comparison = compare(null, remote, result);
       result[comparison.result]
-      .push({
-        type: remote.type,
-        id: remote.id,
-        path: `${environmentsPath}/${remote.id}`,
-        details: comparison.details,
-      });
+        .push({
+          type: remote.type,
+          id: remote.id,
+          path: `${environmentsPath}/${remote.id}`,
+          details: comparison.details,
+        });
 
     }
 

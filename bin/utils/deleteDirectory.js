@@ -12,27 +12,24 @@ governing permissions and limitations under the License.
 
 const fs = require('fs');
 
-const deleteDirectory = function(path) {
+const deleteDirectory = async function (path) {
+  await fs.promises.access(path);
 
-  if (fs.existsSync(path)) {
-    
-    fs.readdirSync(path).forEach(function (file) {
-      
-      const curPath = `${path}/${file}`;
+  await Promise.all(await fs.readdir(path).map(async function (file) {
 
-      // recurse
-      if (fs.lstatSync(curPath).isDirectory()) {
-        deleteDirectory(curPath);
+    const curPath = `${path}/${file}`;
+
+    // recurse
+    if (fs.promises.lstat(curPath).isDirectory()) {
+      return deleteDirectory(curPath);
 
       // delete file
-      } else {
-        fs.unlinkSync(curPath);
-      }
-    });
+    } else {
+      return fs.promises.unlink(curPath);
+    }
+  }));
 
-    fs.rmdirSync(path);
-  }
-
+  return fs.promises.rmdir(path);
 };
 
 module.exports = deleteDirectory;

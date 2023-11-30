@@ -49,12 +49,12 @@ module.exports = async (args, result) => {
   for (let rule of rules) {
     remotesPromises.push(
       reactor
-      .listRuleComponentsForRule(rule.id, {
-        'page[size]': 999,
-      })
-      .then((response) => {
-        remotes = remotes.concat(response.data);
-      })
+        .listRuleComponentsForRule(rule.id, {
+          'page[size]': 999,
+        })
+        .then((response) => {
+          remotes = remotes.concat(response.data);
+        })
     );
 
     // const tempRuleComponents = (
