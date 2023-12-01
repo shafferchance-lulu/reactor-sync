@@ -1,6 +1,6 @@
 {
     "name": "@shafferchance/reactor-sync-test",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Command line tool for syncing data to and from Adobe Launch to a local directory.",
     "author": {
         "name": "Adobe Systems",
