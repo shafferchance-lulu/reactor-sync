@@ -42,7 +42,7 @@ module.exports = async (path, args) => {
     let settings;
 
     // first get the data file
-    data = readFile(dataPath);
+    data = await readFile(dataPath);
 
     // determine transforms
     /** @type {import('./writeResources').ReactorTypeElement["transforms"]} */
@@ -68,7 +68,6 @@ module.exports = async (path, args) => {
         transforms = items.find((item) => (
           item.id === data.attributes.delegate_descriptor_id
         )).transforms;
-
       }
 
       // extensions
@@ -186,7 +185,6 @@ module.exports = async (path, args) => {
 
         // read the file
         let value = await fs.promises.readFile(filePath, 'utf8');
-
         // reverse transforms
         if (transforms) {
 
@@ -209,7 +207,6 @@ module.exports = async (path, args) => {
               transform.type === 'file' ||
               transform.type === 'customCode'
             ) {
-
               // No replacements needed
 
               // remove
@@ -221,7 +218,6 @@ module.exports = async (path, args) => {
 
             } else if (process.env.LOG_LEVEL === 'ERROR') {
               console.error('unrecognized transform');
-              console.log(transform);
             }
 
             // set the value on the settings object
