@@ -31,7 +31,7 @@ async function pull(args) {
 
   await ensureDirectory(settings.propertyId);
 
-  writeResources(resourceTypes, settings);
+  await writeResources(resourceTypes, settings);
   spinner.stop();
 }
 
