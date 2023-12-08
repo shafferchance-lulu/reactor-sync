@@ -54,7 +54,7 @@ yargs
       });
     },
     async (argv) => {
-      const args = argv.argv;
+      const args = argv.argv ?? {};
       await pull(args);
     }
   )
