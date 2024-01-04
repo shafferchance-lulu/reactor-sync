@@ -84,7 +84,7 @@ async function makeSymLink(localDirectory, sanitizedName, data) {
       if (isWindows) {
         await symLinkWindows(localDirectory, sanitizedName, data);
       } else {
-        await mkdirp(`${localDirectory}${path.sep}${sanitizedName}`);
+        // await mkdirp(`${localDirectory}${path.sep}${sanitizedName}`);
         await fs.promises.symlink(data.id, `${localDirectory}${path.sep}${sanitizedName}`, 'dir');
       }
     } catch (e) {
