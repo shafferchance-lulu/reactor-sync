@@ -14,6 +14,7 @@ const fs = require('fs');
 const ora = import('ora');
 const fromFile = require('../utils/fromFile');
 const compare = require('./compare');
+const { getAllDataForRequest } = require("../utils/paginatedRequest");
 
 module.exports = async (args, result) => {
   const spinner = await ora.then(mod => mod.default('Diffing Rule Components \n'));
@@ -39,22 +40,23 @@ module.exports = async (args, result) => {
   // get all of the remote objects
   // TODO: go back through and refactor this to get everything...not just 999
   const rules = (
-    await reactor.listRulesForProperty(args.propertyId, {
+    await getAllDataForRequest(reactor.listRulesForProperty.bind(reactor), args.propertyId, {
       'page[size]': 999,
     })
-  ).data;
+  );
   // const ruleComponents = await property.getRuleComponents();
   let remotes = [];
   let remotesPromises = [];
   for (let rule of rules) {
     remotesPromises.push(
-      reactor
-        .listRuleComponentsForRule(rule.id, {
+      getAllDataForRequest(
+        reactor.listRuleComponentsForRule.bind(reactor),
+        rule.id, {
           'page[size]': 999,
-        })
-        .then((response) => {
-          remotes = remotes.concat(response.data);
-        })
+        }
+      ).then((response) => {
+        remotes = remotes.concat(response.data);
+      })
     );
 
     // const tempRuleComponents = (

@@ -14,6 +14,7 @@ const fs = require('fs');
 const ora = import('ora');
 const fromFile = require('../utils/fromFile');
 const compare = require('./compare');
+const { getAllDataForRequest } = require("../utils/paginatedRequest");
 
 module.exports = async (args, result) => {
 
@@ -40,10 +41,10 @@ module.exports = async (args, result) => {
   // get all of the remote objects
   // TODO: go back through and refactor this to get everything...not just 999
   const remotes = (
-    await reactor.listRulesForProperty(args.propertyId, {
-      'page[size]': 999
+    await getAllDataForRequest(reactor.listRulesForProperty.bind(reactor), args.propertyId, {
+      'page[size]': 100 // This is capped out at 100
     })
-  ).data;
+  );
 
   for (const file of files) {
 
