@@ -6,7 +6,7 @@
  * @param  {unknown[]} args 
  */
 async function* requestPageGenerator(request, pageStart, pageFinish, ...args) {
-    const filterArgs = args.indexOf((a) => a["page[size]"] !== undefined);
+    const filterArgs = args.findIndex((a) => typeof a === "object" && a["page[size]"] !== undefined);
     for (let pageCount = pageStart; pageCount <= pageFinish; pageCount++) {
         if (filterArgs > -1) {
             args[filterArgs]["page[number]"] = pageCount;
