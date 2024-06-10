@@ -55,7 +55,7 @@ module.exports = async (args, result) => {
           'page[size]': 999,
         }
       ).then((response) => {
-        remotes = remotes.concat(response.data);
+        remotes = remotes.concat(response);
       })
     );
 

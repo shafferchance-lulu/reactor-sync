@@ -17,7 +17,6 @@ const compare = require('./compare');
 const { getAllDataForRequest } = require("../utils/paginatedRequest");
 
 module.exports = async (args, result) => {
-
   const spinner = await ora.then(mod => mod.default('Diffing Rules \n'));
   spinner.color = 'blue';
   spinner.start();
